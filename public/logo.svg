@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" role="img" aria-label="DenkoCyber">
+  <defs>
+    <linearGradient id="dcGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7e14ff"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <path d="M32 3 6 13v20c0 14 11 24 26 28 15-4 26-14 26-28V13L32 3Z" fill="url(#dcGrad)"/>
+  <path d="M32 7.5 10 16v17c0 12 9.5 20.7 22 24.6C44.5 53.7 54 45 54 33V16L32 7.5Z" fill="#0b1020"/>
+  <path d="M19 20h10.5c9 0 15.5 6 15.5 14.5S38.5 49 29.5 49H19V20Zm9.5 22c5 0 8.5-3.2 8.5-7.5s-3.5-7.5-8.5-7.5H26v15h2.5Z" fill="url(#dcGrad)"/>
+  <circle cx="39" cy="24" r="2.4" fill="#22d3ee"/>
+</svg>
