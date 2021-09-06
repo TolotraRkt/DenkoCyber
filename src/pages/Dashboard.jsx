@@ -20,9 +20,10 @@ export default function Dashboard() {
         </header>
 
         <main className="mt-12 rounded-2xl border border-white/10 bg-white/5 p-8">
+          <span className="mb-4 block h-1 w-16 rounded-full bg-gradient-to-r from-brand-500 to-accent-500" />
           <h1 className="text-2xl font-bold text-white">Hello World</h1>
           <p className="mt-2 text-slate-300">
-            Connecté en tant que <span className="font-semibold text-brand-300">{user?.username}</span> ({user?.email}).
+            Connecté en tant que <span className="text-gradient font-semibold">{user?.username}</span> ({user?.email}).
           </p>
 
           <dl className="mt-6 grid gap-4 sm:grid-cols-2">

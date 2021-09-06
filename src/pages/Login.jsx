@@ -25,7 +25,7 @@ export default function Login({ onSwitch }) {
 
   return (
     <AuthLayout title="Connexion" subtitle="Accédez à la supervision de votre cybercafé.">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <Alert kind="error">{error}</Alert>
 
         <TextField
@@ -53,9 +53,9 @@ export default function Login({ onSwitch }) {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-8 text-center text-sm text-slate-400">
         Pas encore de compte ?{' '}
-        <button type="button" onClick={onSwitch} className="font-semibold text-brand-400 hover:text-brand-300">
+        <button type="button" onClick={onSwitch} className="font-semibold text-brand-400 transition hover:text-accent-400">
           Créer un compte
         </button>
       </p>

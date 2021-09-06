@@ -5,7 +5,7 @@ import { Alert, Button, TextField } from '../components/ui.jsx'
 
 export default function Register({ onSwitch }) {
   const { register, login } = useAuth()
-  const [form, setForm] = useState({ username: '', email: '', password: '' })
+  const [form, setForm] = useState({ username: '', email: '', password: '', confirmPassword: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -16,6 +16,12 @@ export default function Register({ onSwitch }) {
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
+
+    if (form.password !== form.confirmPassword) {
+      setError('Les mots de passe ne correspondent pas.')
+      return
+    }
+
     setLoading(true)
     try {
       await register({ username: form.username.trim(), email: form.email.trim(), password: form.password })
@@ -30,7 +36,7 @@ export default function Register({ onSwitch }) {
 
   return (
     <AuthLayout title="Créer un compte" subtitle="Configurez l'accès à votre cybercafé en quelques secondes.">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <Alert kind="error">{error}</Alert>
 
         <TextField
@@ -64,15 +70,26 @@ export default function Register({ onSwitch }) {
           minLength={8}
           required
         />
+        <TextField
+          id="confirmPassword"
+          label="Confirmer le mot de passe"
+          type="password"
+          value={form.confirmPassword}
+          onChange={update('confirmPassword')}
+          placeholder="Retapez votre mot de passe"
+          autoComplete="new-password"
+          minLength={8}
+          required
+        />
 
         <Button type="submit" loading={loading} disabled={loading}>
           {loading ? 'Création…' : 'Créer mon compte'}
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-8 text-center text-sm text-slate-400">
         Déjà inscrit ?{' '}
-        <button type="button" onClick={onSwitch} className="font-semibold text-brand-400 hover:text-brand-300">
+        <button type="button" onClick={onSwitch} className="font-semibold text-brand-400 transition hover:text-accent-400">
           Se connecter
         </button>
       </p>
