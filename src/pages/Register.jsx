@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { Link, useHistory } from 'react-router-dom'
 import { useAuth } from '../context/useAuth.js'
 import AuthLayout from '../components/AuthLayout.jsx'
 import { Alert, Button, TextField } from '../components/ui.jsx'
 
-export default function Register({ onSwitch }) {
+export default function Register() {
+  const history = useHistory()
   const { register, login } = useAuth()
   const [form, setForm] = useState({ username: '', email: '', password: '', confirmPassword: '' })
   const [error, setError] = useState('')
@@ -27,6 +29,7 @@ export default function Register({ onSwitch }) {
       await register({ username: form.username.trim(), email: form.email.trim(), password: form.password })
       // Auto-login right after successful registration.
       await login(form.username.trim(), form.password)
+      history.replace('/dashboard')
     } catch (err) {
       setError(err.message || "Échec de l'inscription")
     } finally {
@@ -44,7 +47,7 @@ export default function Register({ onSwitch }) {
           label="Nom d'utilisateur"
           value={form.username}
           onChange={update('username')}
-          placeholder="alice"
+          placeholder="Nom d'utilisateur"
           autoComplete="username"
           minLength={3}
           required
@@ -55,7 +58,7 @@ export default function Register({ onSwitch }) {
           type="email"
           value={form.email}
           onChange={update('email')}
-          placeholder="alice@example.com"
+          placeholder="Adresse email"
           autoComplete="email"
           required
         />
@@ -89,9 +92,9 @@ export default function Register({ onSwitch }) {
 
       <p className="mt-8 text-center text-sm text-slate-400">
         Déjà inscrit ?{' '}
-        <button type="button" onClick={onSwitch} className="font-semibold text-brand-400 transition hover:text-accent-400">
+        <Link to="/login" className="font-semibold text-blue-400 transition hover:text-blue-300">
           Se connecter
-        </button>
+        </Link>
       </p>
     </AuthLayout>
   )

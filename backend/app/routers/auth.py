@@ -21,7 +21,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
         .first()
     )
     if existing:
-        raise HTTPException(status_code=400, detail="Email or username already registered")
+        raise HTTPException(status_code=400, detail="Cet email ou ce nom d'utilisateur est déjà utilisé.")
 
     user = User(
         email=payload.email,
@@ -47,7 +47,7 @@ def login(
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username/email or password",
+            detail="Nom d'utilisateur/email ou mot de passe incorrect.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     token = create_access_token(subject=str(user.id))

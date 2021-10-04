@@ -12,6 +12,7 @@ export function TextField({
   autoComplete,
   required,
   minLength,
+  inputMode,
 }) {
   const [show, setShow] = useState(false)
   const isPassword = type === 'password'
@@ -30,6 +31,7 @@ export function TextField({
           autoComplete={autoComplete}
           required={required}
           minLength={minLength}
+          inputMode={inputMode}
           className={`w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-base text-slate-100 placeholder:text-slate-500 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-500/40 ${isPassword ? 'pr-12' : ''}`}
         />
         {isPassword && (
@@ -52,10 +54,10 @@ export function Button({ children, type = 'button', disabled, variant = 'primary
   const base =
     'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-base font-semibold transition disabled:cursor-not-allowed disabled:opacity-60'
   const variants = {
-    // Solid brand color (no gradient).
+    // Sober blue accent on neutral slate surfaces.
     primary:
-      'bg-brand-500 text-white shadow-glow hover:bg-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-ink-900',
-    ghost: 'border border-white/10 bg-white/5 text-slate-200 hover:bg-white/10',
+      'bg-blue-600 text-white hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 focus:ring-offset-slate-950',
+    ghost: 'border border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800',
   }
   return (
     <button type={type} disabled={disabled || loading} className={`${base} ${variants[variant]}`} {...rest}>

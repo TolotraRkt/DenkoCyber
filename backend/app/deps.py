@@ -15,7 +15,7 @@ async def get_current_user(
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Impossible de valider les identifiants.",
         headers={"WWW-Authenticate": "Bearer"},
     )
     subject = decode_access_token(token)
@@ -31,5 +31,5 @@ async def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
     if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(status_code=400, detail="Ce compte utilisateur est désactivé.")
     return current_user

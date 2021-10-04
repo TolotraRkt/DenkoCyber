@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { Link, useHistory } from 'react-router-dom'
 import { useAuth } from '../context/useAuth.js'
 import AuthLayout from '../components/AuthLayout.jsx'
 import { Alert, Button, TextField } from '../components/ui.jsx'
 
-export default function Login({ onSwitch }) {
+export default function Login() {
+  const history = useHistory()
   const { login } = useAuth()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -16,6 +18,7 @@ export default function Login({ onSwitch }) {
     setLoading(true)
     try {
       await login(identifier.trim(), password)
+      history.replace('/dashboard')
     } catch (err) {
       setError(err.message || 'Échec de la connexion')
     } finally {
@@ -33,7 +36,7 @@ export default function Login({ onSwitch }) {
           label="Nom d'utilisateur ou email"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
-          placeholder="alice ou alice@example.com"
+          placeholder="Nom d'utilisateur ou email"
           autoComplete="username"
           required
         />
@@ -55,9 +58,9 @@ export default function Login({ onSwitch }) {
 
       <p className="mt-8 text-center text-sm text-slate-400">
         Pas encore de compte ?{' '}
-        <button type="button" onClick={onSwitch} className="font-semibold text-brand-400 transition hover:text-accent-400">
+        <Link to="/register" className="font-semibold text-blue-400 transition hover:text-blue-300">
           Créer un compte
-        </button>
+        </Link>
       </p>
     </AuthLayout>
   )
