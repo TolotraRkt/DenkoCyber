@@ -25,6 +25,7 @@ from ..session_logic import (
     active_session_for_station,
     busy_station,
     claim_session,
+    compute_billed_amount,
     compute_ends_at,
     expire_if_due,
     free_station,
@@ -149,8 +150,9 @@ def dashboard_stats(
 ) -> DashboardStats:
     """Aggregated figures for the operator dashboard.
 
-    Revenue counts sessions that ended today (done or expired). Running
-    sessions whose time is up are expired first so the numbers stay accurate.
+    Revenue counts sessions that *ended* today (done or expired), i.e. money
+    actually collected today, based on ``ended_at``. Running sessions whose
+    time is up are expired first so the numbers stay accurate.
     """
     now = datetime.utcnow()
     today_start = datetime.combine(now.date(), time.min)
@@ -171,9 +173,10 @@ def dashboard_stats(
     today_count = (
         db.query(func.count(Session.id)).filter(Session.created_at >= today_start).scalar() or 0
     )
+    # Revenue = sessions whose end (ended_at) happened today.
     revenue_today = (
         db.query(func.coalesce(func.sum(Session.amount), 0.0))
-        .filter(Session.created_at >= today_start)
+        .filter(Session.ended_at >= today_start)
         .filter(Session.status.in_(["done", "expired"]))
         .scalar()
         or 0.0
@@ -234,8 +237,11 @@ def stop_session(
             status_code=status.HTTP_409_CONFLICT,
             detail="Cette session n'est pas en cours (statut : {}).".format(session.status),
         )
+    now = datetime.utcnow()
     session.status = "done"
-    session.ended_at = datetime.utcnow()
+    session.ended_at = now
+    # Early stop bills only the time actually used.
+    session.amount = compute_billed_amount(session, now)
     free_station(db, session.station_id)
     db.commit()
     db.refresh(session)

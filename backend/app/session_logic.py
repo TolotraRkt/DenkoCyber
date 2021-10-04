@@ -35,6 +35,32 @@ def remaining_seconds(session: Session, now: Optional[datetime] = None) -> Optio
     return max(0, int(delta))
 
 
+def elapsed_minutes(session: Session, now: Optional[datetime] = None) -> Optional[float]:
+    """Minutes actually elapsed since the session started, capped at its duration.
+
+    Returns None when the session never started. When the session has been
+    running longer than planned, the planned duration is returned (a client
+    never gets billed more than what was requested).
+    """
+    if session.started_at is None:
+        return None
+    now = now or datetime.utcnow()
+    delta = (now - session.started_at).total_seconds() / 60.0
+    return max(0.0, min(delta, session.minutes))
+
+
+def compute_billed_amount(session: Session, now: Optional[datetime] = None) -> float:
+    """Amount to charge for the time actually used, rounded to 2 decimals.
+
+    Early stop bills the elapsed time only; a session that ran its full
+    duration (or beyond) bills its full planned amount.
+    """
+    minutes = elapsed_minutes(session, now)
+    if minutes is None:
+        return float(session.amount)
+    return round(minutes * session.rate_per_minute, 2)
+
+
 def expire_if_due(db: OrmSession, session: Session, now: Optional[datetime] = None) -> bool:
     """Mark ``session`` as expired and free its station if the time is up.
 
@@ -48,6 +74,8 @@ def expire_if_due(db: OrmSession, session: Session, now: Optional[datetime] = No
 
     session.status = SESSION_EXPIRED
     session.ended_at = now
+    # A session that ran to completion is billed its full planned amount.
+    session.amount = float(session.minutes) * session.rate_per_minute
     free_station(db, session.station_id)
     db.commit()
     db.refresh(session)
