@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FiMonitor, FiCopy, FiCheck, FiEdit2, FiX, FiSquare } from 'react-icons/fi'
+import { FiMonitor, FiCopy, FiCheck, FiEdit2, FiX } from 'react-icons/fi'
 import { Alert, Button, TextField } from '../components/ui.jsx'
 import { sessionsApi, stationsApi } from '../services/api.js'
 
@@ -462,39 +462,42 @@ export default function NewSession() {
               return disabled ? (
                 <div
                   key={station.id}
-                  className={`relative ${cardClass}`}
+                  className={`relative h-28 rounded-2xl border bg-slate-900 p-3 transition ${status.ring}`}
                   title={`${station.code} — ${station.rate_per_minute} Ar/min`}
                 >
-                  {live?.session?.code && (
-                    /* Pastille « stop » : termine la session et libère le poste. */
-                    <button
-                      type="button"
-                      onClick={() => releaseSession(station.code, live.session.code)}
-                      disabled={releasing === station.code}
-                      aria-label="Terminer la session et libérer le poste"
-                      title="Terminer la session"
-                      className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-red-500/15 text-red-400 ring-1 ring-red-500/50 transition hover:bg-red-500/30 hover:text-red-300 hover:ring-red-400 disabled:opacity-40"
-                    >
-                      <FiSquare size={11} className="fill-current" />
-                    </button>
-                  )}
-                  <FiMonitor size={26} className={status.text} />
-                  <span className="text-sm font-semibold text-slate-100">{station.code}</span>
-                  {showChrono ? (
-                    <span className="inline-flex flex-col items-center gap-0.5">
-                      <span className="font-mono text-base font-bold tabular-nums text-amber-300">
-                        {formatDuration(live.remaining)}
-                      </span>
-                      <span className="text-[10px] uppercase tracking-wide text-slate-400">
-                        Code {live.session?.code}
-                      </span>
-                    </span>
-                  ) : (
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${status.text}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                      {status.label}
-                    </span>
-                  )}
+                  {/* Ligne du haut : icône à gauche, pastille stop à droite. */}
+                  <div className="flex items-start justify-between">
+                    <FiMonitor size={24} className={status.text} />
+                    {live?.session?.code && (
+                      /* Pastille « stop » : termine la session et libère le poste. */
+                      <button
+                        type="button"
+                        onClick={() => releaseSession(station.code, live.session.code)}
+                        disabled={releasing === station.code}
+                        aria-label="Terminer la session et libérer le poste"
+                        title="Terminer la session"
+                        className="grid h-6 w-6 place-items-center rounded-full bg-red-500/20 text-red-400 ring-1 ring-red-500/70 transition hover:bg-red-500/40 hover:text-red-300 hover:ring-red-400 disabled:opacity-40"
+                      >
+                        {/* Carré « stop » dessiné à la main : parfaitement centré. */}
+                        <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">
+                          <rect x="0" y="0" width="10" height="10" rx="1.5" fill="currentColor" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Chrono centré : l'élément principal. */}
+                  <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 text-center">
+                    <p className="font-mono text-2xl font-extrabold leading-none tabular-nums text-amber-300">
+                      {showChrono ? formatDuration(live.remaining) : '--:--'}
+                    </p>
+                  </div>
+
+                  {/* Bas de carte : code poste + code session. */}
+                  <div className="absolute inset-x-3 bottom-2 flex items-center justify-between text-[10px] uppercase tracking-wide text-slate-400">
+                    <span className="font-semibold text-slate-100">{station.code}</span>
+                    {live?.session?.code && <span>Code {live.session.code}</span>}
+                  </div>
                 </div>
               ) : (
                 <button
