@@ -108,6 +108,12 @@ class SessionClaim(BaseModel):
     station_id: str = Field(min_length=1, max_length=20)
 
 
+class SessionExtend(BaseModel):
+    """Payload to add extra minutes to a running session."""
+
+    extra_minutes: float = Field(gt=0, le=1440)
+
+
 class SessionsPage(BaseModel):
     """A page of sessions plus the total count for the current filter."""
 

@@ -71,6 +71,12 @@ export const sessionsApi = {
     request(`/api/sessions/${encodeURIComponent(code)}/start`, { method: 'POST', auth: true }),
   stop: (code) =>
     request(`/api/sessions/${encodeURIComponent(code)}/stop`, { method: 'POST', auth: true }),
+  extend: (code, extraMinutes) =>
+    request(`/api/sessions/${encodeURIComponent(code)}/extend`, {
+      method: 'POST',
+      body: { extra_minutes: extraMinutes },
+      auth: true,
+    }),
   // Called by the client app running on a station to start a session with a code.
   claim: (code, stationId) =>
     request('/api/sessions/claim', {

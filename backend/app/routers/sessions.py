@@ -14,6 +14,7 @@ from ..schemas import (
     DashboardStats,
     SessionClaim,
     SessionCreate,
+    SessionExtend,
     SessionRead,
     SessionsPage,
     StationLive,
@@ -243,6 +244,38 @@ def stop_session(
     # Early stop bills only the time actually used.
     session.amount = compute_billed_amount(session, now)
     free_station(db, session.station_id)
+    db.commit()
+    db.refresh(session)
+    return session
+
+
+@router.post("/{code}/extend", response_model=SessionRead)
+def extend_session(
+    code: str,
+    payload: SessionExtend,
+    db: OrmSession = Depends(get_db),
+    _: User = Depends(get_current_active_user),
+) -> Session:
+    """Add extra minutes to a running session.
+
+    The duration grows, the planned end time is pushed back and the planned
+    amount is recomputed. Only running sessions can be extended.
+    """
+    session = _get_session_or_404(db, code.upper())
+    if session.status != SESSION_RUNNING:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Seule une session en cours peut être prolongée (statut : {}).".format(
+                session.status
+            ),
+        )
+    extra = float(payload.extra_minutes)
+    session.minutes = float(session.minutes) + extra
+    # Push the planned end back by the extra time.
+    base = session.ends_at or datetime.utcnow()
+    session.ends_at = base + timedelta(minutes=extra)
+    # Planned amount follows the new duration.
+    session.amount = round(float(session.minutes) * session.rate_per_minute, 2)
     db.commit()
     db.refresh(session)
     return session

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FiMonitor, FiCopy, FiCheck, FiEdit2, FiX } from 'react-icons/fi'
+import { FiMonitor, FiCopy, FiCheck, FiEdit2, FiX, FiPlus } from 'react-icons/fi'
 import { Alert, Button, TextField } from '../components/ui.jsx'
 import { sessionsApi, stationsApi } from '../services/api.js'
 
@@ -68,6 +68,10 @@ export default function NewSession() {
   const [liveStations, setLiveStations] = useState({})
   // Code du poste en cours de libération (pour l'indicateur de chargement).
   const [releasing, setReleasing] = useState(null)
+  // Modale « prolonger » : { stationCode, sessionCode } ou null.
+  const [extendTarget, setExtendTarget] = useState(null)
+  const [extendMinutes, setExtendMinutes] = useState('15')
+  const [extending, setExtending] = useState(false)
 
   // Charge les postes au montage. Si la base est vide, on lance le seed.
   useEffect(() => {
@@ -188,6 +192,44 @@ export default function NewSession() {
       setError(err.message || 'Impossible de libérer ce poste.')
     } finally {
       setReleasing(null)
+    }
+  }
+
+  /* Ouvre la modale de prolongation pour une session donnée. */
+  function openExtend(stationCode, sessionCode) {
+    setError('')
+    setExtendTarget({ stationCode, sessionCode })
+    setExtendMinutes('15')
+  }
+
+  /* Valide la prolongation : ajoute les minutes choisies à la session. */
+  async function confirmExtend() {
+    if (!extendTarget) return
+    const extra = parseAmount(extendMinutes)
+    if (extra === null || Number.isNaN(extra) || extra <= 0) {
+      setError('Veuillez saisir une durée valide (minutes).')
+      return
+    }
+    setExtending(true)
+    setError('')
+    try {
+      await sessionsApi.extend(extendTarget.sessionCode, extra)
+      // Rafraîchit immédiatement l'état des postes.
+      const data = await stationsApi.liveAll()
+      const next = {}
+      data.stations.forEach((item) => {
+        next[item.station.code] = {
+          status: item.station.status,
+          session: item.session,
+          remaining: item.remaining_seconds,
+        }
+      })
+      setLiveStations(next)
+      setExtendTarget(null)
+    } catch (err) {
+      setError(err.message || 'Impossible de prolonger cette session.')
+    } finally {
+      setExtending(false)
     }
   }
 
@@ -449,11 +491,16 @@ export default function NewSession() {
             {stations.map((station) => {
               // L'état temps réel prime sur le statut chargé une seule fois.
               const live = liveStations[station.code]
-              const statusKey = live?.status || station.status
+              // Un poste n'est « occupé » que s'il a réellement une session active.
+              // Sinon (session expirée/terminée), on le traite comme libre — évite
+              // l'état incohérent « busy » sans chrono ni code.
+              const hasSession = Boolean(live?.session)
+              let statusKey = live?.status || station.status
+              if (statusKey === 'busy' && !hasSession) statusKey = 'free'
               const status = STATUS_STYLES[statusKey] || STATUS_STYLES.offline
               const isSelected = selectedStation?.id === station.id
               const disabled = statusKey !== 'free'
-              const showChrono = statusKey === 'busy' && live && live.remaining != null
+              const showChrono = hasSession && live.remaining != null
               const cardClass = `flex h-28 flex-col items-center justify-center gap-2 rounded-2xl border bg-slate-900 p-3 text-center transition ${status.ring} ${
                 disabled ? '' : 'cursor-pointer hover:border-blue-500/60'
               } ${isSelected ? 'ring-2 ring-blue-500' : ''}`
@@ -465,24 +512,36 @@ export default function NewSession() {
                   className={`relative h-28 rounded-2xl border bg-slate-900 p-3 transition ${status.ring}`}
                   title={`${station.code} — ${station.rate_per_minute} Ar/min`}
                 >
-                  {/* Ligne du haut : icône à gauche, pastille stop à droite. */}
+                  {/* Ligne du haut : icône à gauche, actions à droite. */}
                   <div className="flex items-start justify-between">
                     <FiMonitor size={24} className={status.text} />
                     {live?.session?.code && (
-                      /* Pastille « stop » : termine la session et libère le poste. */
-                      <button
-                        type="button"
-                        onClick={() => releaseSession(station.code, live.session.code)}
-                        disabled={releasing === station.code}
-                        aria-label="Terminer la session et libérer le poste"
-                        title="Terminer la session"
-                        className="grid h-6 w-6 place-items-center rounded-full bg-red-500/20 text-red-400 ring-1 ring-red-500/70 transition hover:bg-red-500/40 hover:text-red-300 hover:ring-red-400 disabled:opacity-40"
-                      >
-                        {/* Carré « stop » dessiné à la main : parfaitement centré. */}
-                        <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">
-                          <rect x="0" y="0" width="10" height="10" rx="1.5" fill="currentColor" />
-                        </svg>
-                      </button>
+                      <div className="flex items-center gap-1">
+                        {/* Prolonger la session (+ minutes). */}
+                        <button
+                          type="button"
+                          onClick={() => openExtend(station.code, live.session.code)}
+                          aria-label="Prolonger la session"
+                          title="Prolonger"
+                          className="grid h-6 w-6 place-items-center rounded-full bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/70 transition hover:bg-blue-500/40 hover:text-blue-300 hover:ring-blue-400"
+                        >
+                          <FiPlus size={13} />
+                        </button>
+                        {/* Pastille « stop » : termine la session et libère le poste. */}
+                        <button
+                          type="button"
+                          onClick={() => releaseSession(station.code, live.session.code)}
+                          disabled={releasing === station.code}
+                          aria-label="Terminer la session et libérer le poste"
+                          title="Terminer la session"
+                          className="grid h-6 w-6 place-items-center rounded-full bg-red-500/20 text-red-400 ring-1 ring-red-500/70 transition hover:bg-red-500/40 hover:text-red-300 hover:ring-red-400 disabled:opacity-40"
+                        >
+                          {/* Carré « stop » dessiné à la main : parfaitement centré. */}
+                          <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">
+                            <rect x="0" y="0" width="10" height="10" rx="1.5" fill="currentColor" />
+                          </svg>
+                        </button>
+                      </div>
                     )}
                   </div>
 
@@ -519,6 +578,66 @@ export default function NewSession() {
           </div>
         </section>
       </div>
+
+      {/* Modale : prolonger une session en cours. */}
+      {extendTarget && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm"
+          onClick={() => !extending && setExtendTarget(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-slate-100">
+              Prolonger le poste {extendTarget.stationCode}
+            </h3>
+            <p className="mt-1 text-sm text-slate-400">
+              Code <span className="font-mono text-slate-200">{extendTarget.sessionCode}</span>
+            </p>
+
+            <div className="mt-5">
+              <TextField
+                id="extend-minutes"
+                label="Minutes à ajouter"
+                type="text"
+                inputMode="decimal"
+                value={extendMinutes}
+                onChange={(e) => setExtendMinutes(e.target.value)}
+                placeholder="ex. 15"
+              />
+            </div>
+
+            {/* Raccourcis de durée */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[15, 30, 60].map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setExtendMinutes(String(m))}
+                  className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1 text-sm text-slate-300 transition hover:bg-slate-700"
+                >
+                  +{m} min
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setExtendTarget(null)}
+                disabled={extending}
+                className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-slate-300 transition hover:bg-slate-700 disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <Button type="button" loading={extending} onClick={confirmExtend}>
+                Prolonger
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -15,6 +15,12 @@ dist-ssr
 # Git history backup (temporary)
 .git_backup/
 
+# Scripts locaux (maintenance ponctuelle, non versionnes)
+scripts/
+
+# Bases SQLite (ceinture-bretelles, le backend a deja *.db)
+*.db
+
 # Environment
 .env
 .env.*

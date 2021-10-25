@@ -66,6 +66,10 @@ def stations_live(
     items: List[StationLive] = []
     for station in db.query(Station).order_by(Station.code).all():
         session = active_session_for_station(db, station.code)
+        # active_session_for_station may expire a session and free the station,
+        # which commits a new status. Refresh so we never report a stale "busy"
+        # station with no session.
+        db.refresh(station)
         items.append(
             StationLive(
                 station=StationRead.from_orm(station),
